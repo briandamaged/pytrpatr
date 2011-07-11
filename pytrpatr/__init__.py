@@ -45,12 +45,19 @@ def not_implemented(*args, **kwargs):
 
 
 
-class DotMatcher:
+class ListMatcher:
     def __init__(self, conditions):
         self.conditions = conditions
 
-    def __call__(self, **args):
-        pass
+    def __call__(self, *args):
+        if len(self.conditions) != len(args):
+            return False
+
+        for (c, a) in zip(self.conditions, args):
+            if not c(a):
+                return False
+
+        return True
 
 
 class rule:
@@ -73,23 +80,48 @@ class Dispatcher:
         return self.otherwise(*args, **kwargs)
 
     def given(self, condition, action):
-        c = to_arg_matcher(condition)
+        c = to_arglist_matcher(condition)
         a = to_action(action)
         self.rules.append(rule(c, a))
 
 
+# The Dispatcher's given method constructs a dispatcher rule by invoking
+# other dispatchers.  To make this work, we need to bootstrap 3 instances:
+to_arg_matcher     = Dispatcher()
+to_arglist_matcher = Dispatcher()
+to_action          = Dispatcher()
 
-to_arg_matcher = Dispatcher()
-to_arg_matcher.rules.append(rule(lambda x: isinstance(x, types.ClassType), lambda x: type_checker(x)))
-to_arg_matcher.rules.append(rule(lambda x: isinstance(x, types.TypeType), lambda x: type_checker(x)))
 
-to_action    = Dispatcher()
-to_action.rules.append(rule(lambda x: isinstance(x, collections.Callable), lambda x: x))
+to_arg_matcher.rules.append(rule(type_checker(types.TypeType), type_checker))
+to_arglist_matcher.otherwise = to_arg_matcher
+to_action.rules.append(rule(type_checker(types.FunctionType), identity))
 
+
+to_arg_matcher.given(types.ClassType, type_checker)
 to_arg_matcher.given(just, lambda x: value_equals(x.value))
 to_arg_matcher.given(int, value_equals)
 to_arg_matcher.given(str, value_equals)
 to_arg_matcher.given(float, value_equals)
+to_arg_matcher.given(types.FunctionType, identity)
+
+
+def __optimize_bounded_list_matcher(x):
+    """
+    There's no reason to iterate over a list if it only
+    has 0 or 1 element.  So, this function figures out
+    the optimal arglist matcher to use.
+    """
+    if len(x) == 0:
+        return lambda *aray: len(aray) == 0
+    elif len(x) == 1:
+        return to_arg_matcher(x[0])
+    else:
+        return ListMatcher(map(to_arg_matcher, x))
+
+
+to_arglist_matcher.given(list, __optimize_bounded_list_matcher)
+to_arglist_matcher.given(tuple, __optimize_bounded_list_matcher)
+to_arglist_matcher.given(types.FunctionType, identity)
 
 to_action.given(just, lambda x: always_return(x.value))
 to_action.given(int, always_return)
