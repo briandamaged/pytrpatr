@@ -5,17 +5,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def typechecker(t):
-    '''
-    Returns a function that checks whether or not
-    a value is of a given type.
-    '''
-    return lambda x : isinstance(x, t)
-
-
 class ArgumentMismatch(TypeError):
     pass
 
+
+class TypeChecker(object):
+    '''
+    This is essentially a function that checks whether or not
+    a value is of a given type.
+    '''
+    
+    def __init__(self, t):
+        self.type = t
+
+    def __call__(self, instance):
+        return isinstance(instance, self.type)
+
+    def __eq__(self, other):
+        return isinstance(other, TypeChecker) and (self.type == other.type)
+
+    def __ne__(self, other):
+        return not(self == other)
 
 
 
@@ -34,7 +44,6 @@ class accepts(object):
             return f(*args, **kwargs)
 
         return check_args
-
 
 
 

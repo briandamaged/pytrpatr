@@ -3,37 +3,14 @@ import collections
 from functools import wraps
 
 
-def memoized(f):
-    cache = {}
-    @wraps(f)
-    def memo(*args):
-        try:
-            return cache[args]
-        except KeyError:
-            retval = f(*args)
-            cache[args] = retval
-            return retval
-    return memo
 
 
-
-@memoized
-def type_checker(t):
-    return lambda x: isinstance(x, t)
-
-
-class just:
-    def __init__(self, value):
-        self.value = value
-
+'''
 
 def identity(x):
     return x
 
-def always_return(x):
-    def always_returns_value(*args, **kwargs):
-        return x
-    return always_returns_value
+
 
 def value_equals(x):
     def check_value(y):
@@ -106,11 +83,6 @@ to_arg_matcher.given(types.FunctionType, identity)
 
 
 def __optimize_bounded_list_matcher(x):
-    """
-    There's no reason to iterate over a list if it only
-    has 0 or 1 element.  So, this function figures out
-    the optimal arglist matcher to use.
-    """
     if len(x) == 0:
         return lambda *aray: len(aray) == 0
     elif len(x) == 1:
@@ -129,4 +101,4 @@ to_action.given(str, always_return)
 to_action.given(float, always_return)
 
 
-
+'''
