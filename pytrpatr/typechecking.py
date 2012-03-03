@@ -5,6 +5,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def typechecker(t):
+    '''
+    Returns a function that checks whether or not
+    a value is of a given type.
+    '''
+    return lambda x : isinstance(x, t)
+
 
 class ArgumentMismatch(TypeError):
     pass
