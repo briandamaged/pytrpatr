@@ -1,1 +1,3 @@
-pytrpatr/*.pyc
+**/*.pyc
+.project
+.pydevproject
