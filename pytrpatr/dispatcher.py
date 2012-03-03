@@ -40,16 +40,22 @@ class Dispatcher(object):
 
 
     def __call__(self, *args, **kwargs):
+        successful = False
         for r in self.rules:
-            if r.condition(*args, **kwargs):
+            try:
+                successful = r.condition(*args, **kwargs)
+            except TypeError:
+                continue
+            
+            if successful:
                 return r.action(*args, **kwargs)
 
-        return self.otherwise(*args, **kwargs)
+        return self.on_match_failure(*args, **kwargs)
 
 
     def when(self, condition_spec, action_spec):
         rule = Rule(condition_spec, action_spec)
-        self.rules.append(rule)
+        self.rules.insert(0, rule)
         return self
 
     def otherwise(self, action_spec):
